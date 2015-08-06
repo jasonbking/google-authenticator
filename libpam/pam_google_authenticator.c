@@ -200,6 +200,22 @@ static char *get_secret_filename(pam_handle_t *pamh, const Params *params,
         var_len = 7;
         subst = username;
         var = cur;
+      } else if (!memcmp(cur, "${RUSER}", 8)) {
+        PAM_CONST void *ruser = NULL;
+
+#ifdef PAM_AUSER
+	/* On Solaris systems at least, su sets this instead of PAM_RUSER */
+        if (pam_get_item(pamh, PAM_AUSER, &ruser) == PAM_SUCCESS) {
+	  var_len = 8;
+	  subst = (const char *)ruser;
+	  var = cur;
+	} else
+#endif
+        if (pam_get_item(pamh, PAM_RUSER, &ruser) == PAM_SUCCESS) {
+          var_len = 8;
+	  subst = (const char *)ruser;
+	  var = cur;
+	}
       }
     }
     if (var) {
