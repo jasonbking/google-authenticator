@@ -200,6 +200,25 @@ static char *get_secret_filename(pam_handle_t *pamh, const Params *params,
         var_len = 7;
         subst = username;
         var = cur;
+      } else if (!memcmp(cur, "${RUSER}", 8)) {
+        PAM_CONST void *item = NULL;
+
+#ifdef PAM_AUSER
+	/*
+	 * Some platforms (e.g. Solaris, Illumos) define PAM_AUSER and set it
+	 * to the 'from' user when using su.  Prefer that if it exists
+	 */
+        if (pam_get_item(pamh, PAM_AUSER, &item) == PAM_SUCCESS) {
+          var_len = 8;
+	  subst = (const char *)item;
+	  var = cur;
+	} else
+#endif
+        if (pam_get_item(pamh, PAM_RUSER, &item) == PAM_SUCCESS) {
+          var_len = 8;
+	  subst = (const char *)item;
+	  var = cur;
+        }
       }
     }
     if (var) {
